@@ -1,0 +1,451 @@
+<head>
+
+    <script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+  <script src='./moment.js'></script>
+  <link rel="stylesheet" href="http://at.alicdn.com/t/font_985232_9utbuzmxe8.css">
+  </head>
+  
+  <body>
+    <div class="xp-player" id='xp-player-container'>
+        <div class="xp-loading"></div>
+        <div class="xp-netError"></div>
+        <video id='videoPalyer' src="https://www.quirksmode.org/html5/videos/big_buck_bunny.mp4"></video>
+        <div class="xp-controls">
+          <button class="xp-play">
+            <i id='play-btn' class='iconfont icon-bofang'></i>
+          </button>
+          <button class="xp-pause">
+              <i id='pause-btn' class='iconfont icon-bofangzanting'></i>
+          </button>
+          <div class="xp-progress">
+            <span class='xp-progress-tooltip'></span>
+            <progress min='0' max='100' value='1' id='xp-progress-played' class='xp-progress-played'></progress>
+            <input type="range" id='xp-progress-controler' min='0' value='0' max='100' step='0.001'>
+            <div class='xp-progress-buffer'></div> 
+          </div>
+          <div class="xp-time">
+            <span class="xp-time-current">10:12</span>
+            <span class="xp-time-seperator">/</span>
+            <span class="xp-time-duration">30:09</span>
+          </div>
+          <div class="xp-volume">
+            <button id='muteBtn' class='xp-mute'>
+              <i class='iconfont icon-shengyin'></i>
+            </button>
+            <button id='cancelMuteBtn' class='cancelMuteBtn'>
+              <i class='iconfont icon-jingyin'></i>
+            </button>
+            <input type="range" id='volumeControler' min='0', max='10', value='2', step='1'>
+          </div>
+          <div class="xp-playrate"></div>
+          <div class="xp-quality"></div>
+          <div class="xp-fullScreen on" id='fullScreenControler'>
+            <i class='iconfont icon-quanping'></i>
+          </div>
+          <div class="xp-cancelFullScreen"></div>
+
+          <div class="xp-control-modal"></div>
+        </div>
+    </div>
+ 
+    <style>
+      input[type='range']
+      {
+        -webkit-appearance: none;
+        outline: none;
+        /* transform: rotate(-90deg) */
+      }
+      input[type='range']::-webkit-slider-runnable-track{
+        background-color: #eee;
+        height: 4px;
+        outline: none;
+      }
+      input[type='range']::-moz-range-track{
+        background-color: #eee;
+      }
+      input[type="range"]::-ms-track{  
+        color:transparent;
+        background-color: #eee;
+        border: none;
+        height: 4px;
+      }
+      input[type="range"]::-ms-trick{  
+        color:transparent;
+        background-color: #eee;
+      }
+      input[type="range"]::-ms-fill-lower{  
+        color:transparent;
+        background-color: #eee;
+      }
+      input[type='range']::-webkit-slider-thumb {  
+          -webkit-appearance: none;
+          border: 3px solid #aaa;
+          height: 14px;
+          width: 14px;
+          border-radius: 8px;
+          background: #1ba1e2;
+          cursor: pointer;
+          position: relative;
+          top: -5px;
+      }
+      input[type='range']::-moz-range-thumb {
+          border: 3px solid #aaa;
+          height: 7px;
+          width: 7px;
+          border-radius: 8px;
+          background: #1ba1e2;
+          cursor: pointer;
+      }
+      input[type='range']::-ms-thumb {
+        border: 3px solid #aaa;
+        height: 7px;
+        width: 7px;
+        border-radius: 8px;
+        background: #1ba1e2;
+        cursor: pointer;
+    }
+    .xp-player{
+      position: relative;
+      height: 400px;
+    }
+    .xp-player>video{
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      z-index: -100;
+    }
+    .xp-controls{
+      position: absolute;
+      bottom: 0;
+      height: 80px;
+      width: 100%;
+      z-index: 2147483648;
+    }
+    .xp-controls>button{
+      background: none;
+      border: none;
+    }
+    .xp-controls>button:focus{
+      outline: none;
+    }
+    .xp-pause,.xp-play{
+      position: absolute;
+      left: 0;
+      top: 30px;
+    }
+    .xp-play>i,.xp-pause>i,.xp-volume>button>i{
+      color: #eee;
+      font-size: 2em;
+    }
+    .xp-play>i:hover,.xp-pause>i:hover{
+      color: white;
+    }
+    .xp-progress{
+      position: absolute;
+      top: 0;
+      width: 100%;
+    }
+    .xp-progress>input{
+      width: 100%;
+    }
+    .xp-time{
+      position: absolute;
+      top: 30px;
+      left: 40px;
+      height: 30px;
+      line-height: 30px;
+    }
+    .xp-time > span{
+      color: #bbb;
+    }
+    .xp-time > span:nth-of-type(1){
+      color: white;
+    }
+    .xp-volume{
+      position: absolute;
+      right: 100px;
+      top: 30px;
+    }
+    .xp-volume>button{
+      border: none;
+      outline: none;
+      background: none;
+      cursor: pointer;
+    }
+    .xp-volume>input{
+      position: relative;
+      top: -8px
+    }
+    .xp-control-modal{
+      position: absolute;
+      bottom: 0;
+      top: 0;
+      left:0;
+      right:0;
+      height: 100%;
+      width: 100%;
+      z-index: -1;
+      background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 1))
+    }
+    .xp-fullScreen{
+      cursor: pointer;
+      position: absolute;
+      right: 30px;
+      color: #fff;
+      top: 30px;
+    }
+    .xp-fullScreen>i{
+      font-size: 20px;
+    }
+    /* 全屏下隐藏影子DOM  也就是默认的controls */
+    video::-webkit-media-controls{
+        display:none !important;
+    }
+    .xp-progress-played{
+      position: absolute;
+      top: 2px;
+      width: 100%;
+      height: 4px;
+      border: none;  
+      background-color:#e6e6e6;
+      color: #0064B4; /*IE10*/
+    }
+    .xp-progress-played::-moz-progress-bar { background: #0064B4; }
+    .xp-progress-played::-webkit-progress-bar { background: #e6e6e6; }
+    .xp-progress-played::-webkit-progress-value  { background: #0064B4; }
+    
+ 
+    </style>
+    <script>
+
+      class xpPlayer {
+        constructor(player, vol) {
+          this.media = player
+          this.currentVol = vol
+          this.oldVol = 0
+        }
+        // 播放
+        play() {
+          const playPromise = this.media.play()
+          if(playPromise) {
+            // 如果播放出错自动暂停
+            playPromise.catch(() => {
+              console.log('播放出错，已自动暂停')
+              thie.media.pause()
+            })
+          }
+          
+        }
+        // 暂停
+        pause() {
+          this.media.pause()
+        }
+        // 获取声音
+        getVol() {
+          return this.media.volume
+        }
+        // 获取视频时长信息
+        getTime() {
+          let that = this
+          return new Promise(function(resolve,reject) {
+            that.media.addEventListener('loadedmetadata', function() {
+              const {currentTime, duration} = that.media
+              console.log(that.media.duration)
+              resolve({currentTime, duration})
+            })
+          })
+          
+        }
+        // 无干预播放
+        addProgress() {
+          this.media.addEventListener('timeupdate', function() {
+            // console.log(formatDuration(this.currentTime))
+            $('.xp-time-current').text(formatDuration(this.currentTime))
+            $('#xp-progress-controler').val((this.currentTime/this.duration)*100)
+            $('#xp-progress-played').val((this.currentTime/this.duration)*100)
+          }, false)
+        }
+        // 拖拉进度条
+        addDrager() {
+          console.log(1111111111111)
+          let that = this
+          $('#xp-progress-controler').change(function(e) {
+            let val = e.target.value
+            that.media.currentTime = (val*that.media.duration)/100
+            $('.xp-time-current').text(formatDuration(this.currentTime))            
+          })
+        }
+        setOldVol(oldVol) {
+          this.oldVol = oldVol ? oldVol : this.getVol()
+          console.log('setVol: ' + this.oldVol)
+        }
+        volChange(vol) {
+          console.log('oldVol: ' + this.oldVol)
+          this.media.volume = vol ? vol/10 : .2
+          this.currentVol = this.media.volume
+          console.log('currentVol: ' + this.currentVol)
+        }
+        formatDuration(duration) {
+          let allSeconds = duration
+          let hours = Math.floor(allSeconds/3600)
+          let minutes = Math.floor((allSeconds%3600)/60)
+          let seconds = Math.floor((allSeconds%3600)%60)
+          console.log(allSeconds)
+          if(hours) {
+            return addZero(hours) + ' : ' + addZero(minutes) + ' : ' + addZero(seconds)
+          } else if(minutes) {
+            return addZero(minutes) + ' : ' + addZero(seconds)
+          } else if(seconds) {
+            return '00 : ' + addZero(seconds)
+          } else {
+            return '00 : 00';
+          }
+
+          function addZero(str) {
+            let res = str.toString()
+            if(res.length < 2) {
+              res = '0' + res
+            }
+            return res
+          }
+        }
+      }
+      
+      let videoDOM = document.getElementById('videoPalyer')
+      let player = new xpPlayer(videoDOM, '.2')
+      
+      function initPlayer() {
+        player.addProgress()
+        player.addDrager()
+        $('#pause-btn').hide()
+        $('#cancelMuteBtn').hide()
+        player.volChange(2)
+        // $('.xp-time-current').innerHTML = player.getTime().currentTime
+        player.getTime().then(res => {
+          console.log(res)
+          $('.xp-time-current').text(formatDuration(0))
+          $('.xp-time-duration').text(formatDuration(60))
+        })
+
+      }
+
+      
+
+      function formatDuration(duration) {
+        let allSeconds = duration
+        let hours = Math.floor(allSeconds/3600)
+        let minutes = Math.floor((allSeconds%3600)/60)
+        let seconds = Math.floor((allSeconds%3600)%60)
+        console.log(allSeconds)
+        if(hours) {
+          return addZero(hours) + ' : ' + addZero(minutes) + ' : ' + addZero(seconds)
+        } else if(minutes) {
+          return addZero(minutes) + ' : ' + addZero(seconds)
+        } else if(seconds) {
+          return '00 : ' + addZero(seconds)
+        } else {
+          return '00 : 00';
+        }
+
+        function addZero(str) {
+          let res = str.toString()
+          if(res.length < 2) {
+            res = '0' + res
+          }
+          return res
+        }
+      }
+
+      initPlayer()
+
+      
+      $('#play-btn').click(function() {
+        player.play()
+        $(this).hide()
+        $('#pause-btn').show()
+
+      })
+      $('#pause-btn').click(function() {
+        player.pause()
+        $(this).hide()
+        $('#play-btn').show()
+      })
+      
+      
+      $('#muteBtn').click(function() {
+        console.log(11)
+        $(this).hide()
+        $('#cancelMuteBtn').show()
+        // player.volChange(player.oldVol)
+        $('#volumeControler').val(0)
+        player.setOldVol()
+        $('#volumeControler').trigger('change')
+        
+      })
+      $('#cancelMuteBtn').click(function() {
+        console.log(22)
+        $(this).hide()
+        $('#muteBtn').show()
+        // player.volChange(0)
+        $('#volumeControler').val(player.oldVol*10)
+        $('#volumeControler').trigger('change')
+      })
+
+      $('#volumeControler').change(function(e) {
+
+        if (e.target.value !== '0') {
+          $('#muteBtn').show()
+          $('#cancelMuteBtn').hide()
+        } else {
+          $('#muteBtn').hide()
+          $('#cancelMuteBtn').show()
+        }
+        player.volChange(e.target.value)
+      })
+      
+      let fullBtn = document.getElementById('fullScreenControler')
+      $('#fullScreenControler').click(function() {
+        let onOrOff = fullBtn.classList.contains('on');
+        let elem = document.getElementById('xp-player-container')
+
+        if (onOrOff) {
+          requestFullScreen(elem);
+          fullBtn.classList.remove('on');
+          fullBtn.classList.add('off');
+        } else {
+          cancelFullscreen();
+          fullBtn.classList.add('on');
+          fullBtn.classList.remove('off');
+        }
+      })
+
+      function requestFullScreen(elem) {
+        if(elem.requestFullScreen) {
+          elem.requestFullScreen()
+        } else if (elem.msRequestFullScreen) {
+          elem.msRequestFullScreen()
+        } else if (elem.mozRequestFullScreen) {
+          elem.mozRequestFullScreen
+        } else if (elem.webkitRequestFullScreen) {
+          elem.webkitRequestFullScreen()
+        }
+      }
+      function cancelFullscreen(){
+        if (document.exitFullscreen) {
+        document.exitFullscreen();
+        } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+        } else if(document.oRequestFullscreen){
+        document.oCancelFullScreen();
+        }else if (document.webkitExitFullscreen){
+        document.webkitExitFullscreen();
+        }
+      }
+    </script>
+  </body>
